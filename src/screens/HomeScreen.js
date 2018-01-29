@@ -8,7 +8,8 @@ import {
   TextInput,
   Switch,
   TouchableOpacity,
-  Button
+  Button,
+  FlatList
 } from 'react-native';
 import SwitchSelector from 'react-native-switch-selector';
 import Header from '../components/Header';
@@ -18,10 +19,13 @@ import MenuItem from '../components/MenuItem';
 import Card from '../components/Card';
 import CardSection from '../components/CardSection';
 import Filter from '../api/Filter';
+import {getFilterJSON,getSelector,buildURL} from '../api/APIHelper';
+import Property from '../data/Property';
+import PropertyDetail from '../components/PropertyDetail';
 
-const options = [{label:'BUY',value:'buy'},
-                 {label:'RENT',value:'rent'}];
-let f = new Filter('buy',[1,2],0,10);
+const options = [{label:'BUY',value:["Primary","Resale"]},
+                 {label:'RENT',value:'Rental'}];
+let f = new Filter(["Primary","Resale"],[2,3],0,1000000);
                  
 export default class HomeScreen extends Component {
     static navigationOptions = {
@@ -29,10 +33,103 @@ export default class HomeScreen extends Component {
     }
   constructor(props) {
     super(props);
-    this.state = {filter:f};
+    this.state = {
+        filter:f,
+        properties:[],
+        pageStart:0,
+        isLoading:false,
+        isRefreshing:false
+    };
+  }
+  
+ geturl() {
+    var flist = ["mainImageURL","price","bedrooms","size","measure","unitType","name","label","possessionDate","floor","totalFloors"];
+    var sel = getSelector(flist,this.state.filter,this.state.pageStart);
+    var query = {
+        selector:sel,
+        includeNearbyResults:false,
+        includeSponsoredResults:false
+    };
+    const BASE_URL = 'https://www.makaan.com/petra/app/v4/listing';
+     var url = buildURL(BASE_URL,query);
+     return url;
+  }
+  _urlTest = () => {
+    var fjson = getFilterJSON(this.state.filter);
+    var flist = ["mainImageURL","price","bedrooms","size","measure","unitType","name","label","possessionDate","floor","totalFloors"];
+    var sel = getSelector(flist,this.state.filter);
+    var data = {
+        'selector':JSON.stringify(sel),
+        'includeNearbyResults':false,
+        'includeSponsoredResults':false,
+        'sourceDomain':'Makaan'
+    };
+    var query = {
+        selector:sel,
+        includeNearbyResults:false,
+    };
+ var querystring = this.encodeQueryData(data);
+     //console.log(querystring);
+     const BASE_URL = 'https://www.makaan.com/petra/app/v4/listing';
+     var url = buildURL(BASE_URL,query);
+     console.log(url);
+  }
+  load() {
+      const {properties} = this.state;
+      this.setState({
+          ...this.state,
+          isLoading:true
+      });
+      fetch(this.geturl())
+      .then(res => res.json())
+      .then(res => {
+          var items = res.data[0].facetedResponse.items;
+          //console.log(items);
+          var res = [];
+          items.forEach((item) => {
+              //console.log(item);
+              //console.log(typeof(item));
+              let id = item.listing.id;
+              let imgURL = item.listing.mainImageURL;
+              let price = item.listing.currentListingPrice.price;
+              let bedrooms = item.listing.property.bedrooms;
+              let size = item.listing.property.size;
+              let measure = item.listing.property.measure;
+              let unitType = item.listing.property.unitType;
+              let label1 = item.listing.property.project.locality.label;
+              let label2 = item.listing.property.project.locality.suburb.label;
+              let floor = item.listing.floor;
+              let tf = item.listing.totalFloors;
+              let pdate = item.listing.property.project.possessionDate;
+              let name = unitType;
+              if(unitType==='Apartment') {
+                   name = item.listing.property.project.name;
+               }
+               if(pdate===undefined)
+                pdate = item.listing.possessionDate;
+               let p = new Property(id,imgURL,price,bedrooms,size,measure,unitType,name,label1,label2,pdate,floor,tf);
+               res.push(p);
+          })
+          console.log(res);
+          this.setState({
+              ...this.state,
+              properties:pageStart===0 ? res : [...properties,...res],
+              isRefreshing:false
+          });
+      })
+      .catch(err => console.log(err));
+  }
+  handleLoadMore() {
+      this.setState({
+          ...this.state,
+          pageStart:this.state.pageStart+20
+      },() => {
+          this.load();
+      });
   }
   render() {
       const {navigate} = this.props.navigation;
+      const {properties,isRefreshing} = this.state;
     return (
       <View style={styles.container}>
         <Header>
@@ -68,12 +165,23 @@ export default class HomeScreen extends Component {
             <Text>Not Applied</Text>
           </MenuItem>
         </MenuBar>
-        <Card>
-            <Image source={require('../../images/home.png')} style={styles.image} />
-        </Card>
+        <FlatList 
+        data={properties}
+        renderItem={({item}) => (
+            <PropertyDetail data={item}/>
+          )}
+          keyExtractor={i=>i.id}
+          refreshing={isRefreshing}
+          onEndReached={this.handleLoadMore}
+          onEndReachedThreshold={0}
+        />
         <Button
         title="test"
         onPress={() => console.log(this.state)}
+        />
+        <Button
+        title="url-test"
+        onPress={this._urlTest}
         />
       </View>
     );
@@ -83,6 +191,9 @@ export default class HomeScreen extends Component {
     if(params) {
       this.setState({...this.state,filter:params.filter});
     }
+    //test
+    console.log(this.geturl());
+   // this.load();
   }
 }
 

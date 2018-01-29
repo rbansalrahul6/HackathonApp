@@ -31,6 +31,7 @@ const styles = StyleSheet.create({
         marginLeft: 5,
         marginRight: 5,
         marginTop: 10,
-        padding: 5
+        padding: 5,
+        backgroundColor: 'white'
     },
 });
