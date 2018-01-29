@@ -9,7 +9,8 @@ import {
   Switch,
   TouchableOpacity,
   Button,
-  FlatList
+  FlatList,
+  ActivityIndicator
 } from 'react-native';
 import SwitchSelector from 'react-native-switch-selector';
 import Header from '../components/Header';
@@ -113,7 +114,7 @@ export default class HomeScreen extends Component {
           console.log(res);
           this.setState({
               ...this.state,
-              properties:pageStart===0 ? res : [...properties,...res],
+              properties:this.state.pageStart===0 ? res : [...properties,...res],
               isRefreshing:false
           });
       })
@@ -127,6 +128,11 @@ export default class HomeScreen extends Component {
           this.load();
       });
   }
+  renderFooter () {
+    return this.state.isLoading ? <View style={{ flex: 1, padding: 10 }}>
+    <ActivityIndicator size="small" />
+  </View> : null
+}
   render() {
       const {navigate} = this.props.navigation;
       const {properties,isRefreshing} = this.state;
@@ -174,14 +180,7 @@ export default class HomeScreen extends Component {
           refreshing={isRefreshing}
           onEndReached={this.handleLoadMore}
           onEndReachedThreshold={0}
-        />
-        <Button
-        title="test"
-        onPress={() => console.log(this.state)}
-        />
-        <Button
-        title="url-test"
-        onPress={this._urlTest}
+          ListFooterComponent={this.renderFooter.bind(this)}
         />
       </View>
     );
@@ -192,8 +191,8 @@ export default class HomeScreen extends Component {
       this.setState({...this.state,filter:params.filter});
     }
     //test
-    console.log(this.geturl());
-   // this.load();
+    //console.log(this.geturl());
+    this.load();
   }
 }
 
