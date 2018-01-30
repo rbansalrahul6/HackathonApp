@@ -3,24 +3,37 @@ import {
     View,
     Text,
     StyleSheet,
-    Button
+    Button,
+    TouchableOpacity,
+    Dimensions
 } from 'react-native';
-import {MyButton,SolidButton} from '../components/Buttons';
+import {MyButton,SolidButton,TouchButton} from '../components/Buttons';
 import MultiSlider from '@ptomasroos/react-native-multi-slider';
 import Filter from '../api/Filter';
+import TestButton from '../components/TestButton';
+import {convert} from '../utils/CurrencyUtils';
+
+const {width,height} = Dimensions.get('window');
 
 //let filter = new Filter(1,0,10);
+const bedroomOptions = [
+    {value:2,label:'2BHK'},
+    {value:3,label:'3BHK'},
+    {value:4,label:'4BHK'},
+    {value:5,label:'5BHK'},
+];
 
 export default class FilterScreen extends Component {
     static navigationOptions = {
-        value: 'Filter',
+        title: 'Filter',
     }
 
     constructor(props) {
         super(props);
         this.state = {
            // multiSliderValue:[3,7],
-            filter:null
+            filter:null,
+            btnList: [0,0,0,0]
         };
     }
 
@@ -33,63 +46,95 @@ export default class FilterScreen extends Component {
         //console.log([this.state.multiSliderValue[0], this.state.multiSliderValue[1]]);
       }
 
-      _onPress(val) {
-        console.log(val);
+      _onPress(id) {
+        const btns = this.state.btnList;
+        btns[id] = 1 - btns[id];
+        this.setState({
+            ...this.state,
+            btnList:btns
+        });
     }
 
     render() {
-        const {navigate} = this.props.navigation;
+        const {goBack} = this.props.navigation;
+        const {params} = this.props.navigation.state;
+        const minPrice = convert(this.state.filter.minBudget);
+        const maxPrice = convert(this.state.filter.maxBudget);
         return (
-            <View>
-                <Text>Bedrooms</Text>
+            <View style={styles.container}>
+                <View>
+                <Text style={styles.filterName}>Bedrooms</Text>
                 <View style={styles.btnPlate}>
-                    <MyButton value={2} onPress={(value) => {
-                        console.log(value);
-                        //this.state.filter.rooms = value;  //wrong
-                        }}/>
-                    <MyButton value={3} onPress={(value) => {
-                        console.log(value);
-                        //this.state.filter.rooms = value;
-                        }}/>
-                    <MyButton value={4} onPress={(value) => {
-                        console.log(value);
-                        //this.state.filter.rooms = value;
-                        }}/>
+                    <TouchButton
+                    id={0}
+                    data={bedroomOptions[0]}
+                    initialColor={this.state.btnList[0]}
+                    onPress={(id) => this._onPress(id)}
+                    />
+                    <TouchButton
+                    id={1}
+                    data={bedroomOptions[1]}
+                    initialColor={this.state.btnList[1]}
+                    onPress={(id) => this._onPress(id)}
+                    />
+                    <TouchButton
+                    id={2}
+                    data={bedroomOptions[2]}
+                    initialColor={this.state.btnList[2]}
+                    onPress={(id) => this._onPress(id)}
+                    />
+                    <TouchButton
+                    id={3}
+                    data={bedroomOptions[3]}
+                    initialColor={this.state.btnList[3]}
+                    onPress={(id) => this._onPress(id)}
+                    />
                 </View>
-                <Text>Budget</Text>
-                <View style={styles.sliderOne}>
-                <Text style={styles.text}>{this.state.filter.minBudget} </Text>
-                <Text style={styles.text}>{this.state.filter.maxBudget}</Text>
-                </View>
-                <View style={{paddingTop:20,marginLeft:20}}>
+                <Text style={[styles.filterName,{paddingTop:50}]}>Budget</Text>
+                <View style={{paddingTop:30,alignItems:'center'}}>
                 <MultiSlider
                     values={[this.state.filter.minBudget, this.state.filter.maxBudget]}
                     sliderLength={280}
                     onValuesChange={this.multiSliderValuesChange}
                     min={0}
-                    max={10}
+                    max={100000000}
                     step={1}
                     snapped
                 />
                 </View>
+                <View style={styles.sliderOne}>
+                <Text style={styles.priceText}>{minPrice.value}{minPrice.suffix} </Text>
+                <Text style={styles.priceText}>{maxPrice.value}{maxPrice.suffix}</Text>
+                </View>
+                </View>
                 <SolidButton 
                 title="APPLY FILTER" 
-                onPress={() => navigate('Home',{filter:this.state.filter})}
+                onPress={() => {
+                    goBack();
+                    params.test(this.state.filter,this.state.btnList);
+                }}
                 />
             </View>
         );
     }
     componentWillMount() {
         const {params} = this.props.navigation.state;
-        this.setState({...this.state,filter:params.filter});
+        this.setState({...this.state,filter:params.filter,btnList:params.btnList});
     }
 }
 
 const styles = StyleSheet.create({
+    container: {
+        flex:1,
+        backgroundColor: 'white',
+        paddingTop: 20,
+        justifyContent: 'space-between'
+    },
     btnPlate: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        padding: 10
+        paddingTop: 15,
+        paddingHorizontal: 20
     },
     sliderOne: {
         flexDirection: 'row',
@@ -99,4 +144,12 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-end',
         backgroundColor: 'red'
     },
+    filterName: {
+        marginLeft: 20,
+        color: 'grey',
+        fontWeight: 'bold'
+    },
+    priceText: {
+        color: 'grey'
+    }
 });

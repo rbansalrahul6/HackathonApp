@@ -49,16 +49,3 @@ return url;
 }
 
 
-// var o = {
-//     k1:1,
-//     k2:'val',
-//     k3:true
-//   };
-//   var arr = Object.entries(o);
-
-//   var tmp = `
-//   base_url?
-//   ${arr.map((item, i) => 
-//     `${item[0]}=${JSON.stringify(item[1])}`
-//   ).join('&')}
-// `;

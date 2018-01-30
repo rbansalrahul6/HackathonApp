@@ -10,7 +10,7 @@ import {
   TouchableOpacity,
   Button,
   FlatList,
-  ActivityIndicator
+  ActivityIndicator,
 } from 'react-native';
 import SwitchSelector from 'react-native-switch-selector';
 import Header from '../components/Header';
@@ -26,7 +26,10 @@ import PropertyDetail from '../components/PropertyDetail';
 
 const options = [{label:'BUY',value:["Primary","Resale"]},
                  {label:'RENT',value:'Rental'}];
-let f = new Filter(["Primary","Resale"],[2,3],0,1000000);
+let f = new Filter(["Primary","Resale"],[1,2,3,4,5],0,100000000);
+let page = 0;
+let bedroomBtns = [1,1,1,1];
+const bedroomOptions = [2,3,4,5];
                  
 export default class HomeScreen extends Component {
     static navigationOptions = {
@@ -45,7 +48,7 @@ export default class HomeScreen extends Component {
   
  geturl() {
     var flist = ["mainImageURL","price","bedrooms","size","measure","unitType","name","label","possessionDate","floor","totalFloors"];
-    var sel = getSelector(flist,this.state.filter,this.state.pageStart);
+    var sel = getSelector(flist,f,page);
     var query = {
         selector:sel,
         includeNearbyResults:false,
@@ -53,6 +56,7 @@ export default class HomeScreen extends Component {
     };
     const BASE_URL = 'https://www.makaan.com/petra/app/v4/listing';
      var url = buildURL(BASE_URL,query);
+     console.log(url);
      return url;
   }
   _urlTest = () => {
@@ -75,12 +79,13 @@ export default class HomeScreen extends Component {
      var url = buildURL(BASE_URL,query);
      console.log(url);
   }
-  load() {
-      const {properties} = this.state;
+  load = () => {
+    const {properties} = this.state;
       this.setState({
-          ...this.state,
+          //...this.state,
           isLoading:true
       });
+      console.log(this.state)
       fetch(this.geturl())
       .then(res => res.json())
       .then(res => {
@@ -108,10 +113,11 @@ export default class HomeScreen extends Component {
                }
                if(pdate===undefined)
                 pdate = item.listing.possessionDate;
+
+               pdate = new Date(pdate);
                let p = new Property(id,imgURL,price,bedrooms,size,measure,unitType,name,label1,label2,pdate,floor,tf);
                res.push(p);
           })
-          console.log(res);
           this.setState({
               ...this.state,
               properties:this.state.pageStart===0 ? res : [...properties,...res],
@@ -120,22 +126,51 @@ export default class HomeScreen extends Component {
       })
       .catch(err => console.log(err));
   }
-  handleLoadMore() {
-      this.setState({
-          ...this.state,
-          pageStart:this.state.pageStart+20
-      },() => {
-          this.load();
-      });
-  }
+  handleLoadMore = () => {
+      //console.log(this.state.pageStart);
+    //   this.setState({
+    //       ...this.state,
+    //       pageStart:this.state.pageStart+20
+    //   },() => {
+    //       this.load();
+    //   });
+    page+=20;
+    this.load();
+  };
   renderFooter () {
     return this.state.isLoading ? <View style={{ flex: 1, padding: 10 }}>
     <ActivityIndicator size="small" />
   </View> : null
 }
+testFilter = (fil,btnList) => {
+    f = fil;
+    bedroomBtns = btnList;
+    let tempBedrooms = [1];
+    bedroomBtns.forEach((element,index) => {
+        if(element===1)
+            tempBedrooms.push(bedroomOptions[index]);
+    });
+    f.rooms = tempBedrooms;
+    page = 0;
+    this.setState({
+        ...this.state,
+        properties:[]
+    });
+    this.load();
+}
+changeType = (type) => {
+    f.type = type;
+    page = 0;
+    this.setState({
+        ...this.state,
+        properties:[]
+    });
+    this.load();
+}
   render() {
       const {navigate} = this.props.navigation;
       const {properties,isRefreshing} = this.state;
+      console.log(f);  
     return (
       <View style={styles.container}>
         <Header>
@@ -158,14 +193,16 @@ export default class HomeScreen extends Component {
                 value =>{
                     console.log(value);
                     //f.type=value;
-                    this.setState({...this.state,
-                        filter:{...this.state.filter,type:value}
-                    })  
+                    // this.setState({...this.state,
+                    //     filter:{...this.state.filter,type:value}
+                    // });
+                    this.changeType(value);
+                    
                 } }
             />
           </MenuItem>
           <MenuItem>
-            <TouchableOpacity onPress={() => navigate('Filter',{filter:this.state.filter})}>
+            <TouchableOpacity onPress={() => navigate('Filter',{filter:f,btnList:bedroomBtns,test:this.testFilter })}>
             <Text>FILTER</Text>
             </TouchableOpacity>
             <Text>Not Applied</Text>
@@ -187,11 +224,13 @@ export default class HomeScreen extends Component {
   }
   componentDidMount() {
     const {params} = this.props.navigation.state;
-    if(params) {
-      this.setState({...this.state,filter:params.filter});
-    }
+    // if(params) {
+    //     console.log("Inside params")
+    //   this.setState({...this.state,filter:params.filter});
+    // }
+    // console.log(this.state);
     //test
-    //console.log(this.geturl());
+    // console.log(this.geturl());
     this.load();
   }
 }
