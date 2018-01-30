@@ -21,7 +21,7 @@ export class SolidButton extends Component {
 }
 
 export class TouchButton extends Component {
-    colors = ['white','green'];
+    colors = ['white','#FA5858'];
     constructor(props) {
         super(props);
         this.state={
@@ -41,7 +41,7 @@ export class TouchButton extends Component {
                 this.handlePress();
                 this.props.onPress(this.props.id);
             }}>
-                <Text>{this.props.data.label}</Text>
+                <Text style={styles.btnLabel}>{this.props.data.label}</Text>
             </TouchableOpacity>
         );
     }
@@ -70,6 +70,10 @@ const styles = StyleSheet.create({
     },
     btnTitle: {
         color: 'white',
+        fontWeight: 'bold'
+    },
+    btnLabel: {
+        color:'#424242',
         fontWeight: 'bold'
     }
 });

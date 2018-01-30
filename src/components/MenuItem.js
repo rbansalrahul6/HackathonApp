@@ -21,6 +21,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         alignSelf: 'stretch',
-        backgroundColor: 'lightgrey',
+        backgroundColor: '#D8D8D8',
     },
 });

@@ -24,7 +24,7 @@ export default class PropertyDetail extends Component {
                 </View>
                 <Text style={styles.descText}>{property.bedrooms} BHK Apartment  {property.size} {property.measure} </Text>
                 <Text style={styles.greyText}>{property.name} | {property.label1} {property.label2}</Text>
-                <Text style={styles.greyText}>Possession by {getMonthName(property.pdate)} {property.pdate.getFullYear()} | {property.floor}{getOrdinalSuffix(property.floor)} of {property.tfloor} floor</Text>
+                <Text style={styles.greyText}>Possession by {getMonthName(property.pdate)} {property.pdate.getFullYear()} | {getOrdinalSuffix(property.floor)} of {property.tfloor} floor</Text>
             </Card>
         );
     }

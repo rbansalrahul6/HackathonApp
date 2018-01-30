@@ -18,13 +18,13 @@ import HeaderSection from '../components/HeaderSection';
 import MenuBar from '../components/MenuBar';
 import MenuItem from '../components/MenuItem';
 import Filter from '../api/Filter';
-import {getFilterJSON,getSelector,buildURL} from '../api/APIHelper';
+import {getSelector,buildURL} from '../api/APIHelper';
 import Property from '../data/Property';
 import PropertyDetail from '../components/PropertyDetail';
 
 const options = [{label:'BUY',value:["Primary","Resale"]},
                  {label:'RENT',value:'Rental'}];
-let f = new Filter(["Primary","Resale"],[1,2,3,4,5],0,100000000);
+let filter = new Filter(["Primary","Resale"],[1,2,3,4,5],0,100000000);
 let page = 0;
 let bedroomBtns = [1,1,1,1];
 const bedroomOptions = [2,3,4,5];
@@ -44,7 +44,7 @@ export default class HomeScreen extends Component {
   
  geturl() {
     var flist = ["mainImageURL","price","bedrooms","size","measure","unitType","name","label","possessionDate","floor","totalFloors"];
-    var sel = getSelector(flist,f,page);
+    var sel = getSelector(flist,filter,page);
     var query = {
         selector:sel,
         includeNearbyResults:false,
@@ -52,7 +52,7 @@ export default class HomeScreen extends Component {
     };
     const BASE_URL = 'https://www.makaan.com/petra/app/v4/listing';
      var url = buildURL(BASE_URL,query);
-     //console.log(url);
+     console.log(url);
      return url;
   }
   
@@ -61,7 +61,6 @@ export default class HomeScreen extends Component {
       this.setState({
           isLoading:true
       });
-      console.log(this.state)
       fetch(this.geturl())
       .then(res => res.json())
       .then(res => {
@@ -93,7 +92,7 @@ export default class HomeScreen extends Component {
           })
           this.setState({
               ...this.state,
-              properties:this.state.pageStart===0 ? res : [...properties,...res],
+              properties:page===0 ? res : [...properties,...res],
               isRefreshing:false
           });
       })
@@ -108,15 +107,15 @@ export default class HomeScreen extends Component {
     <ActivityIndicator size="small" />
   </View> : null
 }
-testFilter = (fil,btnList) => {
-    f = fil;
+setFilter = (Filter,btnList) => {
+    filter = Filter;
     bedroomBtns = btnList;
     let tempBedrooms = [1];
     bedroomBtns.forEach((element,index) => {
         if(element===1)
             tempBedrooms.push(bedroomOptions[index]);
     });
-    f.rooms = tempBedrooms;
+    filter.rooms = tempBedrooms;
     page = 0;
     this.setState({
         ...this.state,
@@ -125,7 +124,7 @@ testFilter = (fil,btnList) => {
     this.load();
 }
 changeType = (type) => {
-    f.type = type;
+    filter.type = type;
     page = 0;
     this.setState({
         ...this.state,
@@ -151,7 +150,9 @@ changeType = (type) => {
         </Header>
         <MenuBar>
           <MenuItem>
-            <SwitchSelector 
+            <SwitchSelector
+            buttonColor={'red'} 
+            backgroundColor={'#BDBDBD'}
             options={options} 
             initial={0} 
             onPress={
@@ -161,10 +162,10 @@ changeType = (type) => {
             />
           </MenuItem>
           <MenuItem>
-            <TouchableOpacity onPress={() => navigate('Filter',{filter:f,btnList:bedroomBtns,test:this.testFilter })}>
-            <Text>FILTER</Text>
+            <TouchableOpacity onPress={() => navigate('Filter',{filter:filter,btnList:bedroomBtns,test:this.setFilter })}>
+            <Text style={styles.filterText}>FILTER</Text>
             </TouchableOpacity>
-            <Text>Not Applied</Text>
+            <Text style={styles.filterStatus}>Not Applied</Text>
           </MenuItem>
         </MenuBar>
         <FlatList 
@@ -211,5 +212,14 @@ image: {
     width: null,
     height: 180,
     resizeMode: 'stretch',
+},
+filterText: {
+    color: 'grey',
+    fontWeight: 'bold'
+},
+filterStatus: {
+    color: 'grey',
+    fontSize: 12,
+    marginLeft: 20
 }
 });

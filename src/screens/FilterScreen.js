@@ -95,6 +95,7 @@ export default class FilterScreen extends Component {
                     max={100000000}
                     step={1}
                     snapped
+                    trackStyle={{backgroundColor:'red'}}
                 />
                 </View>
                 <View style={styles.sliderOne}>
