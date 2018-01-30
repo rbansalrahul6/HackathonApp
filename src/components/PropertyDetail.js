@@ -6,7 +6,6 @@ import {
     StyleSheet
 } from 'react-native';
 import Card from './Card';
-import CardSection from './CardSection';
 import {getMonthName} from '../utils/DateUtils';
 import {convert} from '../utils/CurrencyUtils';
 import {getOrdinalSuffix} from '../utils/NumberUtils';

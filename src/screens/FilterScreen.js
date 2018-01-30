@@ -7,10 +7,9 @@ import {
     TouchableOpacity,
     Dimensions
 } from 'react-native';
-import {MyButton,SolidButton,TouchButton} from '../components/Buttons';
+import {SolidButton,TouchButton} from '../components/Buttons';
 import MultiSlider from '@ptomasroos/react-native-multi-slider';
 import Filter from '../api/Filter';
-import TestButton from '../components/TestButton';
 import {convert} from '../utils/CurrencyUtils';
 
 const {width,height} = Dimensions.get('window');
@@ -31,19 +30,15 @@ export default class FilterScreen extends Component {
     constructor(props) {
         super(props);
         this.state = {
-           // multiSliderValue:[3,7],
             filter:null,
             btnList: [0,0,0,0]
         };
     }
 
     multiSliderValuesChange = (values) => {
-        console.log(values);
         this.setState({
-         // multiSliderValue: values,
          filter:{...this.state.filter,minBudget:values[0],maxBudget:values[1]}
         });
-        //console.log([this.state.multiSliderValue[0], this.state.multiSliderValue[1]]);
       }
 
       _onPress(id) {

@@ -17,8 +17,6 @@ import Header from '../components/Header';
 import HeaderSection from '../components/HeaderSection';
 import MenuBar from '../components/MenuBar';
 import MenuItem from '../components/MenuItem';
-import Card from '../components/Card';
-import CardSection from '../components/CardSection';
 import Filter from '../api/Filter';
 import {getFilterJSON,getSelector,buildURL} from '../api/APIHelper';
 import Property from '../data/Property';
@@ -38,9 +36,7 @@ export default class HomeScreen extends Component {
   constructor(props) {
     super(props);
     this.state = {
-        filter:f,
         properties:[],
-        pageStart:0,
         isLoading:false,
         isRefreshing:false
     };
@@ -56,33 +52,13 @@ export default class HomeScreen extends Component {
     };
     const BASE_URL = 'https://www.makaan.com/petra/app/v4/listing';
      var url = buildURL(BASE_URL,query);
-     console.log(url);
+     //console.log(url);
      return url;
   }
-  _urlTest = () => {
-    var fjson = getFilterJSON(this.state.filter);
-    var flist = ["mainImageURL","price","bedrooms","size","measure","unitType","name","label","possessionDate","floor","totalFloors"];
-    var sel = getSelector(flist,this.state.filter);
-    var data = {
-        'selector':JSON.stringify(sel),
-        'includeNearbyResults':false,
-        'includeSponsoredResults':false,
-        'sourceDomain':'Makaan'
-    };
-    var query = {
-        selector:sel,
-        includeNearbyResults:false,
-    };
- var querystring = this.encodeQueryData(data);
-     //console.log(querystring);
-     const BASE_URL = 'https://www.makaan.com/petra/app/v4/listing';
-     var url = buildURL(BASE_URL,query);
-     console.log(url);
-  }
+  
   load = () => {
     const {properties} = this.state;
       this.setState({
-          //...this.state,
           isLoading:true
       });
       console.log(this.state)
@@ -90,11 +66,8 @@ export default class HomeScreen extends Component {
       .then(res => res.json())
       .then(res => {
           var items = res.data[0].facetedResponse.items;
-          //console.log(items);
           var res = [];
           items.forEach((item) => {
-              //console.log(item);
-              //console.log(typeof(item));
               let id = item.listing.id;
               let imgURL = item.listing.mainImageURL;
               let price = item.listing.currentListingPrice.price;
@@ -127,13 +100,6 @@ export default class HomeScreen extends Component {
       .catch(err => console.log(err));
   }
   handleLoadMore = () => {
-      //console.log(this.state.pageStart);
-    //   this.setState({
-    //       ...this.state,
-    //       pageStart:this.state.pageStart+20
-    //   },() => {
-    //       this.load();
-    //   });
     page+=20;
     this.load();
   };
@@ -170,7 +136,6 @@ changeType = (type) => {
   render() {
       const {navigate} = this.props.navigation;
       const {properties,isRefreshing} = this.state;
-      console.log(f);  
     return (
       <View style={styles.container}>
         <Header>
@@ -191,13 +156,7 @@ changeType = (type) => {
             initial={0} 
             onPress={
                 value =>{
-                    console.log(value);
-                    //f.type=value;
-                    // this.setState({...this.state,
-                    //     filter:{...this.state.filter,type:value}
-                    // });
                     this.changeType(value);
-                    
                 } }
             />
           </MenuItem>
@@ -223,14 +182,6 @@ changeType = (type) => {
     );
   }
   componentDidMount() {
-    const {params} = this.props.navigation.state;
-    // if(params) {
-    //     console.log("Inside params")
-    //   this.setState({...this.state,filter:params.filter});
-    // }
-    // console.log(this.state);
-    //test
-    // console.log(this.geturl());
     this.load();
   }
 }
