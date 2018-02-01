@@ -21,13 +21,19 @@ import Filter from '../api/Filter';
 import {getSelector,buildURL} from '../api/APIHelper';
 import Property from '../data/Property';
 import PropertyDetail from '../components/PropertyDetail';
+import {compArrays} from '../utils/NumberUtils';
+import {DEFAULT_ROOM_BTNS,MIN_BUDGET,MAX_BUDGET,BUY,RENT,PAGE_SIZE} from '../utils/Constants';
 
-const options = [{label:'BUY',value:["Primary","Resale"]},
-                 {label:'RENT',value:'Rental'}];
-let filter = new Filter(["Primary","Resale"],[1,2,3,4,5],0,100000000);
+const options = [{label:'BUY',value:BUY},
+                 {label:'RENT',value:RENT}];
+
+let filter = new Filter(11,BUY,null,null,null);
 let page = 0;
-let bedroomBtns = [1,1,1,1];
-const bedroomOptions = [2,3,4,5];
+let bedroomBtns = [0,0,0,0,0];
+const bedroomOptions = [1,2,3,4,5];
+let filterCount = 0;
+let isLoadingComplete = false;
+let resultsAvailable = true;
                  
 export default class HomeScreen extends Component {
     static navigationOptions = {
@@ -38,7 +44,7 @@ export default class HomeScreen extends Component {
     this.state = {
         properties:[],
         isLoading:false,
-        isRefreshing:false
+        isRefreshing:false,
     };
   }
   
@@ -58,6 +64,7 @@ export default class HomeScreen extends Component {
   
   load = () => {
     const {properties} = this.state;
+    resultsAvailable = true;
       this.setState({
           isLoading:true
       });
@@ -65,6 +72,17 @@ export default class HomeScreen extends Component {
       .then(res => res.json())
       .then(res => {
           var items = res.data[0].facetedResponse.items;
+          var totalResults = res.data[0].totalCount;
+          if(totalResults === 0)
+          {
+              resultsAvailable = false;
+          }
+          var loadStatus = true;
+          if(items.length === 0)
+          {
+            loadStatus = false;
+            isLoadingComplete = true;
+          }
           var res = [];
           items.forEach((item) => {
               let id = item.listing.id;
@@ -93,16 +111,25 @@ export default class HomeScreen extends Component {
           this.setState({
               ...this.state,
               properties:page===0 ? res : [...properties,...res],
-              isRefreshing:false
+              isRefreshing:false,
+              isLoading:loadStatus
           });
       })
       .catch(err => console.log(err));
   }
   handleLoadMore = () => {
-    page+=20;
-    this.load();
+      if(!isLoadingComplete) {
+        page+=PAGE_SIZE;
+        this.load();
+      }
+      else {
+          this.setState({isLoading:false});
+      }
   };
   renderFooter () {
+      if(!resultsAvailable) {
+          return noResultsView;
+      }
     return this.state.isLoading ? <View style={{ flex: 1, padding: 10 }}>
     <ActivityIndicator size="small" />
   </View> : null
@@ -110,12 +137,27 @@ export default class HomeScreen extends Component {
 setFilter = (Filter,btnList) => {
     filter = Filter;
     bedroomBtns = btnList;
-    let tempBedrooms = [1];
-    bedroomBtns.forEach((element,index) => {
-        if(element===1)
-            tempBedrooms.push(bedroomOptions[index]);
-    });
-    filter.rooms = tempBedrooms;
+
+    filter.rooms = null;
+    filterCount=0;
+    if(!compArrays(bedroomBtns,DEFAULT_ROOM_BTNS)) {
+        filterCount+=1;
+        let filterCountBedrooms = [];
+        bedroomBtns.forEach((element,index) => {
+            if(element===1)
+                filterCountBedrooms.push(bedroomOptions[index]);
+        });
+        filter.rooms = filterCountBedrooms;    
+    }
+    if(filter.minBudget===MIN_BUDGET && filter.maxBudget===MAX_BUDGET)
+    {
+        filter.minBudget = null;
+        filter.maxBudget = null;
+    }
+    else
+    {
+        filterCount+=1;
+    }
     page = 0;
     this.setState({
         ...this.state,
@@ -123,7 +165,25 @@ setFilter = (Filter,btnList) => {
     });
     this.load();
 }
+clearFilter() {
+    filter.type = null;
+    filter.rooms = null;
+    filter.minBudget = null;
+    filter.maxBudget = null;
+    bedroomBtns = [0,0,0,0,0];
+    filterCount = 0;
+    this.setFilterStatus();
+}
+setFilterStatus() {
+    let res = '';
+    if(filterCount===0)
+        res = 'Not';
+    else
+        res = filterCount + ' Filter';
+    return res + ' Applied';
+}
 changeType = (type) => {
+    this.clearFilter();
     filter.type = type;
     page = 0;
     this.setState({
@@ -135,6 +195,7 @@ changeType = (type) => {
   render() {
       const {navigate} = this.props.navigation;
       const {properties,isRefreshing} = this.state;
+      //console.log(filter);
     return (
       <View style={styles.container}>
         <Header>
@@ -143,8 +204,9 @@ changeType = (type) => {
           </HeaderSection>
           <HeaderSection style={styles.searchBar}>
               <TextInput
+              editable={false}
               style={{flex:1}}
-              placeholder="search here" 
+              placeholder="Gurgaon" 
               />
           </HeaderSection>
         </Header>
@@ -162,10 +224,10 @@ changeType = (type) => {
             />
           </MenuItem>
           <MenuItem>
-            <TouchableOpacity onPress={() => navigate('Filter',{filter:filter,btnList:bedroomBtns,test:this.setFilter })}>
+            <TouchableOpacity onPress={() => navigate('Filter',{filter:filter,btnList:bedroomBtns,test:this.setFilter,filterCount:this.state.filterCount })}>
             <Text style={styles.filterText}>FILTER</Text>
             </TouchableOpacity>
-            <Text style={styles.filterStatus}>Not Applied</Text>
+            <Text style={styles.filterStatus}>{this.setFilterStatus()}</Text>
           </MenuItem>
         </MenuBar>
         <FlatList 
@@ -221,5 +283,21 @@ filterStatus: {
     color: 'grey',
     fontSize: 12,
     marginLeft: 20
+},
+noResultText: {
+    color: 'grey',
+},
+noResult: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 20
 }
 });
+
+const noResultsView = (
+    <View style={styles.noResult}>
+        <Text style={styles.noResultText}>
+        Sorry, no results found !
+        </Text>
+    </View>
+);

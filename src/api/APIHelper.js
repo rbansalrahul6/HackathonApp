@@ -1,4 +1,4 @@
-const BASE_URL = 'www.makaan.com/petra/app/v4/listing';
+import {PAGE_SIZE} from '../utils/Constants';
 
 
 export function getFilterJSON(filter) {
@@ -6,20 +6,29 @@ export function getFilterJSON(filter) {
     //list of filter conditions to be anded
     var filterList = [];
     //add various filter conditions from filter object
-    var typeFilter = {};
-    typeFilter.equal = {listingCategory:filter.type};
-    filterList.push(typeFilter);
-
-    var roomFilter = {};
-    roomFilter.equal = {bedrooms:filter.rooms}
-    filterList.push(roomFilter);
-
-    var budgetFilter = {};
-    budgetFilter.range = {price:{
-        from:filter.minBudget,
-        to:filter.maxBudget
-    }};
-    filterList.push(budgetFilter);
+    if(filter.type) {
+        var typeFilter = {};
+        typeFilter.equal = {listingCategory:filter.type};
+        filterList.push(typeFilter);
+    }
+    if(filter.cityID) {
+        var cityFilter = {};
+        cityFilter.equal = {cityId:filter.cityID}
+        filterList.push(cityFilter);
+    }
+    if(filter.rooms) {
+        var roomFilter = {};
+        roomFilter.equal = {bedrooms:filter.rooms}
+        filterList.push(roomFilter);
+    }
+    if(filter.minBudget!==null && filter.maxBudget!==null) {
+        var budgetFilter = {};
+        budgetFilter.range = {price:{
+            from:filter.minBudget,
+            to:filter.maxBudget
+        }};
+        filterList.push(budgetFilter);
+    }
 
     filterObj.and = filterList;
     return filterObj;
@@ -28,7 +37,7 @@ export function getFilterJSON(filter) {
 function setPaging(start) {
     var paging = {};
     paging.start = start;
-    paging.rows = 20;
+    paging.rows = PAGE_SIZE;
     return paging;
 }
 

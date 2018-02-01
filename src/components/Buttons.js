@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
         shadowRadius: 2,
         elevation: 1,
         paddingVertical: 5,
-        paddingHorizontal: 15
+        paddingHorizontal: 10
     },
     btnTitle: {
         color: 'white',
